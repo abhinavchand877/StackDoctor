@@ -39,6 +39,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r backend/requirements.txt
 
+      - name: Validate Backend Configuration & Module Imports
+        run: |
+          cd backend
+          python -c "from app import create_app; app = create_app('testing'); print('Backend application factory and modules validated successfully.')"
+
       - name: Execute Backend Tests
         run: |
           cd backend
@@ -85,6 +90,10 @@ jobs:
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
+
+      - name: Validate Docker Compose Configuration
+        run: |
+          docker compose config
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

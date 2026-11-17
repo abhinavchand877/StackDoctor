@@ -1,0 +1,75 @@
+# ========================================================
+# StackDoctor Root .dockerignore
+# ========================================================
+
+# Version control & internal agent metadata
+.git
+.github
+.agents
+
+# IDE & Editor caches
+.vscode
+.idea
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Python bytecode & virtual environments
+__pycache__
+*.py[cod]
+*.pyo
+.Python
+.venv
+venv
+env
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.coverage
+coverage
+htmlcov
+build
+dist
+*.egg-info
+
+# Node dependencies & frontend builds
+node_modules
+frontend/node_modules
+frontend/dist
+dist
+.npm
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Sensitive credentials & environment files
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pfx
+*.p12
+*.crt
+credentials*
+*service-account*.json
+
+# Logs, uploads & temporary caches
+logs
+*.log
+tmp
+backend/tmp
+uploads
+backend/uploads
+reports
+generated_reports
+*.zip.tmp
+.cache
+
+# Local database files
+*.db
+*.sqlite
+*.sqlite3
+*.dump
+*.sql

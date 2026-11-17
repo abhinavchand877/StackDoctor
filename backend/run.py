@@ -17,5 +17,7 @@ app = create_app(env_name)
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", "5000"))
-    debug = os.getenv("DEBUG", "True").lower() == "true"
+    is_prod = env_name == "production"
+    # Debug mode is strictly disabled in production
+    debug = False if is_prod else (os.getenv("DEBUG", "True").lower() == "true")
     app.run(host="0.0.0.0", port=port, debug=debug)

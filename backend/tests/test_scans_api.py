@@ -206,4 +206,41 @@ def test_scan_compare_and_sbom_export(client, auth_headers):
     assert sbom_data["bomFormat"] == "CycloneDX"
     assert sbom_data["specVersion"] == "1.5"
 
+def test_production_env_validation_missing_vars(monkeypatch):
+    """TEST CASE 6: Verify missing required environment variables produce understandable errors."""
+    import pytest
+    from app import create_app
+    # Ensure production environment variables are not set
+    monkeypatch.delenv("SECRET_KEY", raising=False)
+    monkeypatch.delenv("JWT_SECRET_KEY", raising=False)
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+
+    with pytest.raises(ValueError) as exc_info:
+        create_app("production")
+    
+    err_msg = str(exc_info.value)
+    assert "Missing required production environment variables" in err_msg
+    assert "SECRET_KEY" in err_msg
+
+def test_docker_compose_analyzer_findings(tmp_path):
+    """Test Docker Compose analysis for syntax, missing services, and hardcoded secrets."""
+    from app.analyzers.docker_analyzer import DockerAnalyzer
+    compose_content = (
+        "version: '3.8'\n"
+        "services:\n"
+        "  web:\n"
+        "    image: nginx:latest\n"
+        "    environment:\n"
+        "      - DB_PASSWORD=plaintext_insecure_pass_12345\n"
+    )
+    (tmp_path / "docker-compose.yml").write_text(compose_content)
+    (tmp_path / "Dockerfile").write_text("FROM python:3.12-slim\nRUN useradd appuser\nUSER appuser\nCMD ['python', 'app.py']\n")
+    (tmp_path / ".dockerignore").write_text(".git\n.env\n")
+
+    analyzer = DockerAnalyzer(str(tmp_path), {"technologies": ["Docker"]})
+    findings = analyzer.analyze()
+    rule_ids = [f["rule_id"] for f in findings]
+    assert "DOC-013" in rule_ids  # Hardcoded Secret in Compose
+
+
 

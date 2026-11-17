@@ -10,6 +10,21 @@ def create_app(config_name: str = None) -> Flask:
     app = Flask(__name__)
     app.config.from_object(config_by_name.get(config_name, config_by_name["default"]))
 
+    # Enforce strict validation of production secrets and configuration
+    if config_name == "production":
+        missing_vars = []
+        if not app.config.get("SECRET_KEY"):
+            missing_vars.append("SECRET_KEY")
+        if not app.config.get("JWT_SECRET_KEY"):
+            missing_vars.append("JWT_SECRET_KEY")
+        if not app.config.get("SQLALCHEMY_DATABASE_URI"):
+            missing_vars.append("DATABASE_URL")
+        if missing_vars:
+            raise ValueError(
+                f"Missing required production environment variables: {', '.join(missing_vars)}. "
+                "Please configure them in your environment or production .env file."
+            )
+
     # Initialize extensions
     cors.init_app(app, resources={r"/api/*": {"origins": "*"}})
     db.init_app(app)

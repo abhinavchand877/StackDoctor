@@ -4,6 +4,24 @@ All notable changes and architectural upgrades to StackDoctor are documented in 
 
 ---
 
+## [2.1.0] - Final Project Audit, GitHub Readiness, CI/CD & Docker Hardening — 2026-11-18
+
+### Added
+- **Repository Root Docker Ignore**: Added root `.dockerignore` preventing transfer of sensitive environment files, caches, and test artifacts into Docker build contexts.
+- **Canonical `docker/` Architecture**: Created `docker/Dockerfile.backend` and `docker/Dockerfile.frontend` supporting repository-root build contexts while preserving `backend/Dockerfile` and `frontend/Dockerfile`.
+- **Comprehensive `.gitignore` Hardening**: Added exclusions for Python caches (`.mypy_cache`, `.ruff_cache`), coverage reports, database dumps (`*.dump`, `*.sql`), certificates (`*.pfx`, `*.p12`, `*.crt`), service account credentials (`*service-account*.json`), and test artifacts without blocking manifest JSON files.
+- **CI/CD Quality Gates in GitHub Actions**:
+  - Added backend configuration and module import validation step in `backend-tests`.
+  - Added Docker Compose syntax validation (`docker compose config`) step in `docker-validation`.
+  - Added strict environment variable validation test verifying informative errors on missing production variables.
+- **Environment Variable Validation**: Added strict validation in `backend/app/__init__.py` verifying that `SECRET_KEY`, `JWT_SECRET_KEY`, and `DATABASE_URL` are provided in `production` mode with descriptive error messages.
+
+### Changed
+- **Debug Mode Lockdown**: Hardened `backend/run.py` to ensure `debug` mode is strictly disabled when running in production mode regardless of environment variables.
+- **Frontend API Config**: Enhanced `frontend/src/services/api.js` to dynamically read `import.meta.env.VITE_API_URL` while maintaining `/api` default for reverse proxy environments.
+
+---
+
 ## [2.0.0] - Final Phase Upgrade — 2026-11-17
 
 ### Added
