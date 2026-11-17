@@ -1,0 +1,9 @@
+{
+  "name": "demo-react-app",
+  "version": "1.0.0",
+  "dependencies": {
+    "react": "latest",
+    "react-dom": "*",
+    "axios": "^1.6.0"
+  }
+}
