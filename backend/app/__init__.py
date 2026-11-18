@@ -74,8 +74,21 @@ def create_app(config_name: str = None) -> Flask:
     # Automatically create tables if not exists
     with app.app_context():
         try:
-            db.create_all()
+            db_uri = str(app.config.get("SQLALCHEMY_DATABASE_URI", ""))
+            if "mysql" in db_uri:
+                with db.engine.connect() as conn:
+                    # Coordinate table initialization across concurrent Gunicorn workers via MySQL advisory lock
+                    conn.execute(db.text("SELECT GET_LOCK('stackdoctor_init_lock', 20)"))
+                    db.create_all()
+                    conn.execute(db.text("SELECT RELEASE_LOCK('stackdoctor_init_lock')"))
+                    conn.commit()
+            else:
+                db.create_all()
         except Exception as e:
-            app.logger.warning(f"Database tables could not be created automatically: {e}")
+            err_msg = str(e).lower()
+            if "already exists" in err_msg or "1050" in err_msg:
+                app.logger.info("Database tables already initialized by concurrent worker.")
+            else:
+                app.logger.warning(f"Database table initialization notice: {e}")
 
     return app

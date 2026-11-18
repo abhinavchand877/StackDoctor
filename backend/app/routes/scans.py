@@ -66,11 +66,58 @@ def create_scan():
     scan_uuid = f"SCAN-{uuid.uuid4().hex[:12].upper()}"
 
     # Save uploaded file to safe temporary location
-    temp_zip_fd, temp_zip_path = tempfile.mkstemp(suffix=".zip", prefix="upload_")
+    upload_tmp_dir = current_app.config.get("UPLOAD_TMP_DIR")
+    if upload_tmp_dir:
+        os.makedirs(upload_tmp_dir, exist_ok=True)
+    temp_zip_fd, temp_zip_path = tempfile.mkstemp(suffix=".zip", prefix="upload_", dir=upload_tmp_dir)
     os.close(temp_zip_fd)
+    zip_retained_for_celery = False
 
     try:
         uploaded_file.save(temp_zip_path)
+
+        # Check if asynchronous processing is requested or globally enabled
+        is_async = (
+            request.args.get("async", "false").lower() == "true"
+            or request.form.get("async", "false").lower() == "true"
+            or current_app.config.get("ASYNC_SCANS_ENABLED", False)
+        )
+        if is_async:
+            scan = Scan(
+                uuid=scan_uuid,
+                user_id=user_id,
+                project_name=project_name,
+                original_filename=filename,
+                health_score=0,
+                risk_level="Pending Analysis",
+                status="PENDING",
+                readiness_status="PENDING",
+                scan_duration=0.0,
+                total_findings=0,
+                passed_checks=0,
+                warning_count=0,
+                failed_checks=0,
+            )
+            scan.set_technologies([])
+            scan.set_summary({})
+            scan.set_readiness_reasons([])
+            scan.set_category_scores({})
+            db.session.add(scan)
+            db.session.commit()
+
+            try:
+                from app.tasks.celery_app import execute_scan_async
+                execute_scan_async.delay(scan.id, temp_zip_path, project_name)
+                zip_retained_for_celery = True
+                return jsonify({
+                    "message": "Scan submitted for asynchronous background processing.",
+                    "scan": scan.to_dict(),
+                    "status": "PENDING"
+                }), 202
+            except Exception as e:
+                current_app.logger.warning(f"Celery dispatch failed: {e}. Executing synchronously.")
+                # Continue below with synchronous execution
+
 
         processor = ZipProcessor(
             max_upload_size=current_app.config.get("MAX_CONTENT_LENGTH", 50 * 1024 * 1024),
@@ -194,7 +241,7 @@ def create_scan():
         current_app.logger.error(f"Scan analysis exception: {str(e)}")
         return jsonify({"error": "Internal Error", "message": f"Failed to complete scan analysis: {str(e)}"}), 500
     finally:
-        if os.path.exists(temp_zip_path):
+        if not zip_retained_for_celery and os.path.exists(temp_zip_path):
             try:
                 os.remove(temp_zip_path)
             except OSError:

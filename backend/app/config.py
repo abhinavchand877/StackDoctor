@@ -16,6 +16,7 @@ class BaseConfig:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Upload limits
+    UPLOAD_TMP_DIR = os.getenv("UPLOAD_TMP_DIR", os.path.abspath(os.path.join(basedir, "..", "tmp")))
     MAX_CONTENT_LENGTH = int(os.getenv("MAX_UPLOAD_SIZE_BYTES", str(50 * 1024 * 1024)))  # 50 MB
     MAX_EXTRACTED_SIZE_BYTES = int(os.getenv("MAX_EXTRACTED_SIZE_BYTES", str(150 * 1024 * 1024)))  # 150 MB
     MAX_ARCHIVE_ENTRIES = int(os.getenv("MAX_ARCHIVE_ENTRIES", "3000"))

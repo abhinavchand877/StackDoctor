@@ -4,6 +4,23 @@ All notable changes and architectural upgrades to StackDoctor are documented in 
 
 ---
 
+## [2.1.1] - Docker Multi-Container Runtime & Celery Worker Stability Fixes — 2026-11-18
+
+### Fixed
+- **Celery Worker Startup Crash**:
+  - Resolved `AttributeError: 'function' object has no attribute 'user_options'` by correcting Docker Compose worker command to target the Celery application instance (`app.tasks.celery_app.celery`).
+  - Resolved Kombu transport `VersionMismatch` error by updating `redis>=6.1.0` in `backend/requirements.txt`.
+  - Added dedicated Celery ping health check (`celery inspect ping`) in Docker Compose.
+- **Database Table Creation Concurrency (Gunicorn Race Condition)**:
+  - Eliminated `(1050, "Table 'scans' already exists")` OperationalError during startup across concurrent Gunicorn worker processes by introducing MySQL advisory distributed locking (`GET_LOCK('stackdoctor_init_lock', 20)`) in `backend/app/__init__.py`.
+- **Frontend Container Health Check**:
+  - Resolved `wget: connection refused` inside Alpine Linux by binding Nginx to both IPv4 and IPv6 (`listen 80; listen [::]:80;`) and updating Dockerfile health check to probe `127.0.0.1:80`.
+- **Cross-Container Async File Sharing**:
+  - Configured shared `uploads_data:/app/tmp` named Docker volume between `backend` and `worker` services so background scan tasks seamlessly process uploaded ZIP archives.
+  - Corrected `Recommendation` entity constructor arguments in asynchronous task handler.
+
+---
+
 ## [2.1.0] - Final Project Audit, GitHub Readiness, CI/CD & Docker Hardening — 2026-11-18
 
 ### Added
