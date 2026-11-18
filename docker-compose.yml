@@ -2,7 +2,6 @@ services:
   # MySQL Database Service
   mysql:
     image: mysql:8.0
-    container_name: stackdoctor-mysql
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_secure_pass_2026}
@@ -23,7 +22,6 @@ services:
   # Redis In-Memory Cache & Queue Service
   redis:
     image: redis:7-alpine
-    container_name: stackdoctor-redis
     restart: unless-stopped
     networks:
       - stackdoctor_net
@@ -38,7 +36,6 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: stackdoctor-backend
     restart: unless-stopped
     environment:
       FLASK_ENV: production
@@ -72,7 +69,6 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: stackdoctor-worker
     restart: unless-stopped
     command: celery -A app.tasks.celery_app.celery worker --loglevel=info
     environment:
@@ -103,7 +99,6 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: stackdoctor-frontend
     restart: unless-stopped
     ports:
       - "80:80"

@@ -18,6 +18,8 @@ All notable changes and architectural upgrades to StackDoctor are documented in 
 - **Cross-Container Async File Sharing**:
   - Configured shared `uploads_data:/app/tmp` named Docker volume between `backend` and `worker` services so background scan tasks seamlessly process uploaded ZIP archives.
   - Corrected `Recommendation` entity constructor arguments in asynchronous task handler.
+- **Eliminated Docker Container Name Collisions**:
+  - Removed fixed `container_name` declarations from `docker-compose.yml` to allow Docker Compose to automatically project-scope container names (`cdd-finalphase-*-1`), preventing naming conflicts across workspaces.
 
 ---
 
